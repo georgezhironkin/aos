@@ -20,27 +20,32 @@ jvm_memory_used_bytes{area="heap"}
 ```
 rate(http_server_requests_seconds_sum[5m]) / rate(http_server_requests_seconds_count[5m])
 ```
-Настройка Pipeline
-Установка плагинов (Manage Jenkins → Plugins):
-
+### Настройка Pipeline
+## Установка плагинов (Manage Jenkins → Plugins):
+```
 GitHub Integration Plugin
 Pipeline
 Git plugin
 Настройка Maven (Manage Jenkins → Tools):
-
+```
+## Установка Maven
+```
 Maven installations → Add Maven
 Name: Maven
 Install automatically: выбрать версию 
 Создание Pipeline Job:
-
+```
+## Добавление pipeline
+```
 New Item → Pipeline
-Имя: adminka-pipeline
+Имя: aos-pipeline
 В разделе "Build Triggers":
-✅ GitHub hook trigger for GITScm polling
-✅ Poll SCM (Schedule: H/5 * * * *)
+GitHub hook trigger for GITScm polling
+Poll SCM (Schedule: H/5 * * * *)
 В разделе "Pipeline":
 Definition: Pipeline script from SCM
 SCM: Git
 Repository URL: https://github.com/YOUR_USERNAME/adminka.git
 Branch: */main
 Script Path: Jenkinsfile
+```

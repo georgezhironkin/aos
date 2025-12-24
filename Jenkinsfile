@@ -42,10 +42,10 @@ pipeline {
     post {
         success {
             echo 'Done'
-            echo "Swagger UI: http://localhost:8080/swagger-ui/index.html"
+            echo "Swagger UI: http://localhost:8888/swagger-ui/index.html"
         }
         failure {
-            echo '❌ Pipeline провалился!'
+            echo 'Pipeline провалился!'
         }
     }
 }

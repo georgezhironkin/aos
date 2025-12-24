@@ -1,5 +1,10 @@
 pipeline {
     agent any
+
+    triggers {
+        pollSCM('H/1 * * * *')
+    }
+
     environment {
         COMPOSE_PROJECT = 'aos'
     }

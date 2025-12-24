@@ -1,0 +1,271 @@
+# aos Application
+
+Spring Boot приложение на Java 17 с интеграцией Jenkins, Grafana и Prometheus.
+
+## Технологии
+
+- Java 17
+- Spring Boot 3.2.0
+- Spring Boot Actuator
+- Micrometer Prometheus
+- Swagger/OpenAPI 3 (SpringDoc)
+- Docker & Docker Compose
+- Jenkins
+- Grafana
+- Prometheus
+
+## Структура проекта
+
+```
+aos/
+├── src/
+│   └── main/
+│       ├── java/com/example/aos/
+│       │   ├── controller/     # REST контроллеры
+│       │   ├── service/        # Бизнес-логика
+│       │   ├── model/          # Модели данных
+│       │   └── dto/            # Data Transfer Objects
+│       └── resources/
+│           └── application.yml
+├── prometheus/
+│   └── prometheus.yml
+├── grafana/
+│   └── provisioning/
+├── Dockerfile
+├── docker-compose.yml
+└── pom.xml
+```
+
+## Запуск приложения
+
+### Локальный запуск
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+Приложение будет доступно по адресу: http://localhost:8080
+
+### Запуск через Docker Compose
+
+```bash
+docker-compose up -d
+```
+
+Сервисы будут доступны по следующим адресам:
+
+- Приложение: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui/index.html (или http://localhost:8080/swagger-ui.html)
+- API Docs (JSON): http://localhost:8080/api-docs
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin)
+- Jenkins: http://localhost:8081
+
+## API Endpoints
+
+### Health Check
+
+- `GET /api/health` - Проверка состояния приложения
+
+### Users API
+
+- `GET /api/users` - Получить всех пользователей
+- `GET /api/users/{id}` - Получить пользователя по ID
+- `POST /api/users` - Создать нового пользователя
+- `PUT /api/users/{id}` - Обновить пользователя
+- `DELETE /api/users/{id}` - Удалить пользователя
+
+### Actuator Endpoints
+
+- `GET /actuator/health` - Health check
+- `GET /actuator/prometheus` - Метрики Prometheus
+- `GET /actuator/metrics` - Список метрик
+
+### Swagger/OpenAPI
+
+- `GET /swagger-ui/index.html` - Swagger UI интерфейс для тестирования API
+- `GET /swagger-ui.html` - Редирект на Swagger UI
+- `GET /api-docs` - OpenAPI спецификация в формате JSON
+
+## Примеры запросов
+
+### Создание пользователя
+
+```bash
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "description": "Test user"
+  }'
+```
+
+### Получение всех пользователей
+
+```bash
+curl http://localhost:8080/api/users
+```
+
+## Swagger/OpenAPI Документация
+
+### Доступ к Swagger UI
+
+После запуска приложения откройте в браузере:
+
+- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
+- **Swagger UI (альтернативный путь)**: http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON**: http://localhost:8080/api-docs
+
+### Использование Swagger UI
+
+1. Откройте http://localhost:8080/swagger-ui/index.html
+2. Вы увидите все доступные API endpoints, сгруппированные по контроллерам
+3. Нажмите на любой endpoint, чтобы увидеть детали:
+   - Параметры запроса
+   - Формат тела запроса
+   - Примеры ответов
+4. Используйте кнопку **"Try it out"** для тестирования API прямо из браузера
+5. Заполните необходимые поля и нажмите **"Execute"** для выполнения запроса
+
+### Особенности
+
+- Полная документация всех REST endpoints
+- Интерактивное тестирование API без использования Postman или curl
+- Автоматическая генерация примеров запросов и ответов
+- Валидация данных перед отправкой запроса
+
+## Мониторинг
+
+### Prometheus
+
+Метрики приложения доступны в Prometheus по адресу: http://localhost:9090
+
+### Grafana
+
+1. Откройте http://localhost:3000
+2. Войдите с учетными данными: admin/admin
+3. Prometheus уже настроен как источник данных
+4. Создайте дашборды для мониторинга метрик приложения
+
+## Jenkins CI/CD
+
+Jenkins доступен по адресу: http://localhost:8081
+
+При первом запуске Jenkins потребует пароль администратора. Получить его можно командой:
+
+```bash
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+### Настройка Pipeline
+
+1. **Установка плагинов** (Manage Jenkins → Plugins):
+
+   - GitHub Integration Plugin
+   - Pipeline
+   - Git plugin
+
+2. **Настройка Maven** (Manage Jenkins → Tools):
+
+   - Maven installations → Add Maven
+   - Name: `Maven`
+   - Install automatically: выбрать версию 3.9.x
+
+3. **Создание Pipeline Job**:
+   - New Item → Pipeline
+   - Имя: `aos-pipeline`
+   - В разделе "Build Triggers":
+     - ✅ GitHub hook trigger for GITScm polling
+     - ✅ Poll SCM (Schedule: `H/5 * * * *`)
+   - В разделе "Pipeline":
+     - Definition: `Pipeline script from SCM`
+     - SCM: `Git`
+     - Repository URL: `https://github.com/YOUR_USERNAME/aos.git`
+     - Branch: `*/main`
+     - Script Path: `Jenkinsfile`
+
+### CI/CD Pipeline
+
+Pipeline выполняет следующие этапы:
+
+1. **Setup** — проверка окружения (Java, Docker)
+2. **Build JAR** — сборка приложения через Maven
+3. **Test** — запуск тестов
+4. **Build Docker Image** — создание Docker образа
+5. **Deploy** — остановка старого контейнера, удаление старых образов, запуск нового
+6. **Health Check** — проверка работоспособности приложения
+7. **Archive** — сохранение артефактов
+
+### Автоматический запуск при Push в GitHub
+
+#### Вариант 1: Poll SCM (простой, работает локально)
+
+Jenkins сам проверяет репозиторий каждые 2 минуты. Уже настроено в Jenkinsfile.
+
+#### Вариант 2: GitHub Webhook (требует публичный доступ к Jenkins)
+
+1. В настройках репозитория GitHub:
+
+   - Settings → Webhooks → Add webhook
+   - Payload URL: `http://YOUR_JENKINS_URL/github-webhook/`
+   - Content type: `application/json`
+   - Events: `Just the push event`
+
+2. Если Jenkins локальный, используйте ngrok:
+   ```bash
+   ngrok http 8081
+   ```
+   И укажите полученный URL в GitHub webhook.
+
+## Сборка
+
+```bash
+mvn clean package
+```
+
+JAR файл будет создан в `target/aos-1.0.0.jar`
+
+## Остановка сервисов
+
+```bash
+docker-compose down
+```
+
+Для удаления всех данных (volumes):
+
+```bash
+docker-compose down -v
+```
+
+## Устранение неполадок
+
+### Порты заняты
+
+Если при запуске появляется ошибка "port is already allocated", освободите порты:
+
+**Windows (PowerShell от имени администратора):**
+
+```powershell
+# Найти процесс на порту (например, 8080)
+netstat -ano | findstr :8080
+
+# Убить процесс по PID (заменить 12345 на реальный PID)
+taskkill /PID 12345 /F
+```
+
+**Linux/macOS:**
+
+```bash
+# Найти и убить процесс на порту
+sudo lsof -ti:8080 | xargs kill -9
+```
+
+**Используемые порты:**
+
+- `8080` — Приложение
+- `9090` — Prometheus
+- `3000` — Grafana
+- `8081` — Jenkins
+- `50000` — Jenkins Agent
